@@ -1,0 +1,17 @@
+{
+    "name": "Flask PWA",
+    "short_name": "FlaskPWA",
+    "description": "A simple PWA with push notifications using Flask",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "icons": [
+      {
+        "src": "static/icons/icon-192x192.png",
+        "sizes": "192x192",
+        "type": "image/png"
+      }
+    ]
+  }
+  
