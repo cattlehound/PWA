@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <title>Flask PWA</title>
+
+      
+</head>
+<body>
+    <h1>Welcome to Flask PWA</h1>
+    <h2>Send Push Notification</h2>
+    <form id="send-notification-form">
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title">
+        <label for="message">Message:</label>
+        <input type="text" id="message" name="message">
+        <button type="submit">Send</button>
+    </form>
+
+    <script>
+        let public_key = "{{ vapid_public_key }}";
+        window.addEventListener("load", () => {
+            if (navigator.serviceWorker) {
+                navigator.serviceWorker
+                .register("/static/service-worker.js")
+                .then(() => {
+                    console.log("Service Worker Registered");
+                    subscribe();
+                })
+                .catch((error) => {
+                    console.error("Service Worker Registration Failed:", error);
+                });
+            } else {
+                console.warn("Service Worker is not supported in this browser.");
+            }
+            });
+
+        async function subscribe() {
+          const registration = await navigator.serviceWorker.ready;
+          const subscription = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlB64ToUint8Array(publicKey),
+          });
+
+          console.log("Push subscription:", subscription);
+
+          const response = await fetch("/subscriptions", {
+              method: "POST",
+              headers: {
+              "Content-Type": "application/json",
+              },
+              body: JSON.stringify(subscription),
+          });
+
+          console.log("Server response:", response);
+          }
+
+      
+        function urlBase64ToUint8Array(base64String) {
+          const padding = '='.repeat((4 - base64String.length % 4) % 4);
+          const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+          const rawData = atob(base64);
+          const outputArray = new Uint8Array(rawData.length);
+          for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+          }
+          return outputArray;
+        }
+      
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', function() {
+            navigator.serviceWorker.register('{{ url_for("static", filename="service-worker.js") }}')
+            .then(async function(registration) {
+              console.log('Service Worker registered with scope:', registration.scope);
+      
+              // Request permission for notifications
+              const permission = await Notification.requestPermission();
+              if (permission !== 'granted') {
+                console.error('Notification permission not granted');
+                return;
+              }
+      
+              // Subscribe to push notifications
+              const subscription = await subscribe();
+              console.log('Push subscription:', subscription);
+      
+              // Send subscription data to the server
+              const response = await fetch('/subscribe', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(subscription)
+              });
+      
+              if (response.ok) {
+                console.log('Subscription saved on the server');
+              } else {
+                console.error('Failed to save subscription on the server');
+              }
+            })
+            .catch(function(error) {
+              console.log('Service Worker registration failed:', error);
+            });
+          });
+        }
+
+        document.getElementById('send-notification-form').addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const title = document.getElementById('title').value;
+            const message = document.getElementById('message').value;
+            const response = await fetch('/send_notification', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title, message })
+            });
+
+            if (response.ok) {
+                console.log('Notification sent');
+            } else {
+                console.error('Failed to send notification');
+            }
+        });
+    </script>
+</body>
+</html>
