@@ -37,25 +37,29 @@
             }
             });
 
-        async function subscribe() {
-          const registration = await navigator.serviceWorker.ready;
-          const subscription = await registration.pushManager.subscribe({
-              userVisibleOnly: true,
-              applicationServerKey: urlB64ToUint8Array(publicKey),
-          });
+            async function subscribe() {
+                const registration = await navigator.serviceWorker.ready;
+                const response = await fetch("/vapid_public_key");
+                const vapidPublicKey = await response.text();
+                const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
 
-          console.log("Push subscription:", subscription);
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: convertedVapidKey,
+                });
 
-          const response = await fetch("/subscriptions", {
-              method: "POST",
-              headers: {
-              "Content-Type": "application/json",
-              },
-              body: JSON.stringify(subscription),
-          });
+                // Send the subscription object to the server
+                await fetch("/subscribe", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(subscription),
+                });
 
-          console.log("Server response:", response);
-          }
+                console.log("User subscribed:", subscription);
+            }
+
 
       
         function urlBase64ToUint8Array(base64String) {
