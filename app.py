@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from py_vapid import Vapid
 from pywebpush import webpush, WebPushException
@@ -32,24 +31,29 @@ def subscribe():
 @app.route("/send-notification", methods=["POST"])
 def send_notification():
     data = request.get_json()
-    title = data.get("title")
-    message = data.get("message")
+    title = data.get("title", "No title")
+    message = data.get("message", "No message")
 
+    # Get stored subscriptions
+    subscriptions = []
+    with open("subscriptions.txt", "r") as f:
+        for line in f:
+            subscriptions.append(json.loads(line.strip()))
+
+    # Send notifications to all clients
     for subscription in subscriptions:
         try:
-            print("Sending notification to:", subscription)
-            webpush.send_notification(
+            webpush(
                 subscription,
                 json.dumps({"title": title, "message": message}),
-                vapid_private_key=app.config["VAPID_PRIVATE_KEY"],
+                vapid_private_key=VAPID_PRIVATE_KEY,
                 vapid_claims={"sub": "mailto:your@email.com"},
             )
-            print("Notification sent")
-        except Exception as e:
-            print("Error sending notification:", e)
-            subscriptions.remove(subscription)
+        except WebPushException as e:
+            print(f"Failed to send notification: {repr(e)}")
 
-    return jsonify({"status": "ok"})
+    return jsonify({"status": "OK"})
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, ssl_context=("cert.pem", "key.pem"), debug=False)
