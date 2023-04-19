@@ -18,7 +18,7 @@
         <input type="text" id="message" name="message">
         <button type="submit">Send</button>
     </form>
-
+    <div id="messages"></div>
     <script>
         let public_key = "{{ vapid_public_key }}";
         window.addEventListener("load", () => {
@@ -110,6 +110,20 @@
             });
           });
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', (event) => {
+              const { title, message } = event.data;
+
+              // Display the received message
+              const messagesContainer = document.getElementById('messages');
+              const newMessage = document.createElement('div');
+              newMessage.textContent = `Title: ${title}, Message: ${message}`;
+              messagesContainer.appendChild(newMessage);
+            });
+          }
+        });
 
         document.getElementById('send-notification-form').addEventListener('submit', async function (event) {
             event.preventDefault();
