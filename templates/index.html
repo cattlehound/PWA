@@ -115,7 +115,7 @@
             event.preventDefault();
             const title = document.getElementById('title').value;
             const message = document.getElementById('message').value;
-            const response = await fetch('/send_notification', {
+            const response = await fetch('/send-notification', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
