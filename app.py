@@ -1,3 +1,4 @@
+
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from py_vapid import Vapid
 from pywebpush import webpush, WebPushException
@@ -51,4 +52,4 @@ def send_notification():
     return jsonify({"status": "ok"})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, ssl_context=("cert.pem", "key.pem"))
+    app.run(host="0.0.0.0", port=5000, ssl_context=("cert.pem", "key.pem"), debug=False)
