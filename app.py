@@ -31,28 +31,29 @@ def subscribe():
 @app.route("/send-notification", methods=["POST"])
 def send_notification():
     data = request.get_json()
-    title = data.get("title", "No title")
-    message = data.get("message", "No message")
+    title = data["title"]
+    message = data["message"]
 
-    # Get stored subscriptions
-    subscriptions = []
     with open("subscriptions.txt", "r") as f:
-        for line in f:
-            subscriptions.append(json.loads(line.strip()))
+        subscriptions = json.load(f)
 
-    # Send notifications to all clients
+    vapid_private_key = VAPID_PRIVATE_KEY
+    vapid_claims = {
+        "sub": "mailto:cattlehound@yahoo.com"  # Replace with your email
+    }
+
     for subscription in subscriptions:
         try:
             webpush(
                 subscription,
                 json.dumps({"title": title, "message": message}),
-                vapid_private_key=VAPID_PRIVATE_KEY,
-                vapid_claims={"sub": "mailto:your@email.com"},
+                vapid_private_key=vapid_private_key,
+                vapid_claims=vapid_claims
             )
-        except WebPushException as e:
-            print(f"Failed to send notification: {repr(e)}")
+        except Exception as e:
+            print("Failed to send notification:", e)
 
-    return jsonify({"status": "OK"})
+    return "Notification sent", 200
 
 
 if __name__ == "__main__":
